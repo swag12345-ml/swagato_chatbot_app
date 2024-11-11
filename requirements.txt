@@ -3,4 +3,4 @@ pillow==10.2.0
 streamlit==1.31.1
 streamlit-option-menu==0.3.12
 pymupdf==1.20.2
-numpy==1.25.0  # for similarity calculations
+
