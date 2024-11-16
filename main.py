@@ -5,8 +5,8 @@ from streamlit_option_menu import option_menu
 from gemini_utility import (
     load_swag_ai_model,
     swag_ai_response,
-    swag_ai_vision_response,
-    swag_ai_embeddings_response
+    swag_ai_embeddings_response,
+    generate_caption_with_vision_api  # Use a specialized captioning function
 )
 
 # Configure Streamlit page
@@ -34,28 +34,19 @@ def translate_role_for_streamlit(user_role):
 if selected == 'ChatBot':
     model = load_swag_ai_model()
 
-    # Initialize chat session in Streamlit if not already present
     if "chat_session" not in st.session_state:
         st.session_state.chat_session = model.start_chat(history=[])
 
-    # Display the chatbot's title
     st.title("🤖 ChatBot")
 
-    # Display the chat history
     for message in st.session_state.chat_session.history:
         with st.chat_message(translate_role_for_streamlit(message.role)):
             st.markdown(message.parts[0].text)
 
-    # Input field for user's message
     user_prompt = st.chat_input("Ask Swag AI...")
     if user_prompt:
-        # Add user's message to chat and display it
         st.chat_message("user").markdown(user_prompt)
-
-        # Send user's message to Swag AI and get the response
         swag_ai_response = st.session_state.chat_session.send_message(user_prompt)
-
-        # Display Swag AI's response
         with st.chat_message("assistant"):
             st.markdown(swag_ai_response.text)
 
@@ -67,15 +58,11 @@ if selected == "Image Captioning":
 
     if st.button("Generate Caption") and uploaded_image is not None:
         try:
-            # Optimize by resizing the image before sending to the model
-            image = Image.open(uploaded_image)
-            resized_image = image.resize((512, 512))  # Resize to reduce processing time
-            st.image(resized_image, caption="Uploaded Image", use_column_width=True)
+            image = Image.open(uploaded_image).resize((512, 512))
+            st.image(image, caption="Uploaded Image", use_column_width=True)
 
-            # Generate caption
-            default_prompt = "Write a short caption for this image"
-            caption = swag_ai_vision_response(default_prompt, resized_image)
-
+            # Generate caption using a faster Google Cloud Vision-based utility
+            caption = generate_caption_with_vision_api(image)
             st.info(f"Caption: {caption}")
         except Exception as e:
             st.error(f"Error processing the image: {e}")
@@ -89,7 +76,7 @@ if selected == "Embed Text":
     if st.button("Get Response"):
         try:
             response = swag_ai_embeddings_response(user_prompt)
-            st.json(response)  # Display embeddings as JSON
+            st.json(response)
         except Exception as e:
             st.error(f"Error: {e}")
 
