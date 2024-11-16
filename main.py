@@ -6,7 +6,6 @@ from gemini_utility import (load_swag_ai_model,
                              swag_ai_response,
                              swag_ai_vision_response,
                              swag_ai_embeddings_response)
-from io import BytesIO
 
 working_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -32,16 +31,6 @@ def translate_role_for_streamlit(user_role):
         return "assistant"
     else:
         return user_role
-
-# Function to resize and compress image
-def resize_image(image, target_size=(800, 500)):
-    return image.resize(target_size)
-
-def compress_image(image, quality=85):
-    img_byte_arr = BytesIO()
-    image.save(img_byte_arr, format="JPEG", quality=quality)
-    img_byte_arr.seek(0)
-    return img_byte_arr
 
 # Chatbot page
 if selected == 'ChatBot':
@@ -81,21 +70,20 @@ if selected == "Image Captioning":
     if st.button("Generate Caption") and uploaded_image is not None:
         try:
             image = Image.open(uploaded_image)
-            compressed_image = compress_image(image)
-            resized_image = resize_image(image)
 
             col1, col2 = st.columns(2)
 
             with col1:
-                st.image(resized_image)
+                resized_img = image.resize((800, 500))
+                st.image(resized_img)
 
-            default_prompt = "Write a short caption for this image"
+            default_prompt = "Write a short caption for this image"  # Change this prompt as per your requirement
 
-            # Synchronously generate caption for the image
-            with st.spinner("Generating caption..."):
-                caption = swag_ai_vision_response(default_prompt, resized_image)
+            # Get the caption of the image from the Swag AI Vision model
+            caption = swag_ai_vision_response(default_prompt, image)
+
+            with col2:
                 st.info(caption)
-
         except Exception as e:
             st.error(f"Error processing the image: {e}")
 
