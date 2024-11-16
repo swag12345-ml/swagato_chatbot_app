@@ -2,7 +2,6 @@ import os
 import json
 from PIL import Image
 import google.generativeai as genai
-from io import BytesIO
 
 # Working directory path
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,23 +23,10 @@ def load_swag_ai_model():
 
 # Get response from Swag AI Vision model - image/text to text
 def swag_ai_vision_response(prompt, image):
-    try:
-        # Convert the image to a compatible format for the API
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        # Save the image to a BytesIO object as JPEG format
-        img_byte_arr = BytesIO()
-        image.save(img_byte_arr, format="JPEG")
-        img_byte_arr.seek(0)
-        
-        # Prepare the request payload with the prompt and image
-        response = genai.GenerativeModel("gemini-1.5-flash").generate_content([prompt, img_byte_arr])
-        result = response.text
-        return result
-
-    except Exception as e:
-        return f"Error generating caption: {e}"
+    swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
+    response = swag_ai_vision_model.generate_content([prompt, image])
+    result = response.text
+    return result
 
 # Get response from embeddings model - text to embeddings
 def swag_ai_embeddings_response(input_text):
