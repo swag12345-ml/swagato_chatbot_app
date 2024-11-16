@@ -3,43 +3,44 @@ import json
 from PIL import Image
 import google.generativeai as genai
 
-# Working directory path
-working_dir = os.path.dirname(os.path.abspath(__file__))
+working_dir = os.path.dirname(os.path.abspath(_file_))
 
-# Path of config_data file
+# Load API key from config
 config_file_path = f"{working_dir}/config.json"
 with open(config_file_path) as f:
     config_data = json.load(f)
 
-# Loading the GOOGLE_API_KEY
 GOOGLE_API_KEY = config_data["GOOGLE_API_KEY"]
-
-# Configuring google.generativeai with API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def load_swag_ai_model():
-    swag_ai_model = genai.GenerativeModel("gemini-pro")
-    return swag_ai_model
+    return genai.GenerativeModel("gemini-pro")
 
-# Get response from Swag AI Vision model - image/text to text
-def swag_ai_vision_response(prompt, image):
+# Vision model for image captioning
+def swag_ai_vision_response(prompt, image_data):
     swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
-    response = swag_ai_vision_model.generate_content([prompt, image])
-    result = response.text
-    return result
+    try:
+        # Passing preprocessed image data directly
+        response = swag_ai_vision_model.generate_content([prompt, image_data])
+        return response.text
+    except Exception as e:
+        raise RuntimeError(f"Failed to generate image caption: {e}")
 
-# Get response from embeddings model - text to embeddings
+# Embedding model for text
 def swag_ai_embeddings_response(input_text):
     embedding_model = "models/embedding-001"
-    embedding = genai.embed_content(model=embedding_model,
-                                    content=input_text,
-                                    task_type="retrieval_document")
-    embedding_list = embedding["embedding"]
-    return embedding_list
+    embedding = genai.embed_content(
+        model=embedding_model,
+        content=input_text,
+        task_type="retrieval_document",
+    )
+    return embedding["embedding"]
 
-# Get response from Swag AI model - text to text
+# Text-to-text model
 def swag_ai_response(user_prompt):
     swag_ai_model = genai.GenerativeModel("gemini-pro")
-    response = swag_ai_model.generate_content(user_prompt)
-    result = response.text
-    return result
+    try:
+        response = swag_ai_model.generate_content(user_prompt)
+        return response.text
+    except Exception as e:
+        raise RuntimeError(f"Failed to generate response: {e}")
