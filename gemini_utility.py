@@ -2,6 +2,7 @@ import os
 import json
 from PIL import Image
 import google.generativeai as genai
+from io import BytesIO
 
 # Working directory path
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -37,14 +38,14 @@ def swag_ai_vision_response(prompt, image):
 
 # Preprocess the image to ensure it's in a proper format and size
 def preprocess_image(image):
-    # Ensure image is in RGB format (common format for models)
-    image = image.convert("RGB")
+    # Convert RGBA to RGB (remove alpha channel)
+    if image.mode == "RGBA":
+        image = image.convert("RGB")
     
     # Resize the image to a reasonable size (e.g., 800x500)
     image = image.resize((800, 500))
     
     # Save the image to a byte stream and return it
-    from io import BytesIO
     img_byte_arr = BytesIO()
     image.save(img_byte_arr, format="JPEG")
     img_byte_arr.seek(0)
