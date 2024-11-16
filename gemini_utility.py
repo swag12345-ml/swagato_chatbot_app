@@ -1,54 +1,45 @@
 import os
 import json
 from PIL import Image
-from google.cloud import vision
 import google.generativeai as genai
 
-# Load configuration
-working_dir = os.path.dirname(os.path.abspath(__file__))
-config_file_path = os.path.join(working_dir, "config.json")
+# Working directory path
+working_dir = os.path.dirname(os.path.abspath(_file_))
+
+# Path of config_data file
+config_file_path = f"{working_dir}/config.json"
 with open(config_file_path) as f:
     config_data = json.load(f)
 
-# Load the API key
+# Loading the GOOGLE_API_KEY
 GOOGLE_API_KEY = config_data["GOOGLE_API_KEY"]
+
+# Configuring google.generativeai with API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Load Swag AI model
 def load_swag_ai_model():
-    return genai.GenerativeModel("gemini-pro")
+    swag_ai_model = genai.GenerativeModel("gemini-pro")
+    return swag_ai_model
 
-# Faster captioning using Google Cloud Vision
-def generate_caption_with_vision_api(image):
-    client = vision.ImageAnnotatorClient()
+# Get response from Swag AI Vision model - image/text to text
+def swag_ai_vision_response(prompt, image):
+    swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
+    response = swag_ai_vision_model.generate_content([prompt, image])
+    result = response.text
+    return result
 
-    # Convert PIL Image to bytes
-    image_byte_array = io.BytesIO()
-    image.save(image_byte_array, format="PNG")
-    content = image_byte_array.getvalue()
-
-    # Prepare vision API request
-    image = vision.Image(content=content)
-    response = client.label_detection(image=image)
-    
-    # Extract labels and form a caption
-    labels = [label.description for label in response.label_annotations]
-    return " ".join(labels[:5])  # Return top 5 labels as a caption
-
-# Embeddings response
+# Get response from embeddings model - text to embeddings
 def swag_ai_embeddings_response(input_text):
     embedding_model = "models/embedding-001"
-    embedding = genai.embed_content(
-        model=embedding_model,
-        content=input_text,
-        task_type="retrieval_document"
-    )
-    return embedding["embedding"]
+    embedding = genai.embed_content(model=embedding_model,
+                                    content=input_text,
+                                    task_type="retrieval_document")
+    embedding_list = embedding["embedding"]
+    return embedding_list
 
-# General text-to-text response
+# Get response from Swag AI model - text to text
 def swag_ai_response(user_prompt):
     swag_ai_model = genai.GenerativeModel("gemini-pro")
     response = swag_ai_model.generate_content(user_prompt)
-    return response.text
-
-
+    result = response.text
+    return result
