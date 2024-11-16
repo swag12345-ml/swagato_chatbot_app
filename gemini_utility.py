@@ -18,55 +18,42 @@ GOOGLE_API_KEY = config_data["GOOGLE_API_KEY"]
 # Configuring google.generativeai with API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Cache model to avoid loading it multiple times
-swag_ai_model = genai.GenerativeModel("gemini-pro")
-swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
-
-# Load Swag AI model once
 def load_swag_ai_model():
+    swag_ai_model = genai.GenerativeModel("gemini-pro")
     return swag_ai_model
 
-# Optimized response for image captioning - image/text to text
+# Get response from Swag AI Vision model - image/text to text
 def swag_ai_vision_response(prompt, image):
     try:
-        # Resize and compress image before sending to the model
-        image = preprocess_image(image)
-        response = swag_ai_vision_model.generate_content([prompt, image])
-        return response.text
-    except Exception as e:
-        return f"Error in image captioning: {str(e)}"
+        # Convert the image to a compatible format for the API
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Save the image to a BytesIO object as JPEG format
+        img_byte_arr = BytesIO()
+        image.save(img_byte_arr, format="JPEG")
+        img_byte_arr.seek(0)
+        
+        # Prepare the request payload with the prompt and image
+        response = genai.GenerativeModel("gemini-1.5-flash").generate_content([prompt, img_byte_arr])
+        result = response.text
+        return result
 
-# Preprocess the image to ensure it's in a proper format and size
-def preprocess_image(image):
-    # Convert RGBA to RGB (remove alpha channel)
-    if image.mode == "RGBA":
-        image = image.convert("RGB")
-    
-    # Resize the image to a reasonable size (e.g., 800x500)
-    image = image.resize((800, 500))
-    
-    # Save the image to a byte stream and return it
-    img_byte_arr = BytesIO()
-    image.save(img_byte_arr, format="JPEG")
-    img_byte_arr.seek(0)
-    
-    return img_byte_arr
+    except Exception as e:
+        return f"Error generating caption: {e}"
 
 # Get response from embeddings model - text to embeddings
 def swag_ai_embeddings_response(input_text):
-    try:
-        embedding_model = "models/embedding-001"
-        embedding = genai.embed_content(model=embedding_model,
-                                        content=input_text,
-                                        task_type="retrieval_document")
-        return embedding["embedding"]
-    except Exception as e:
-        return f"Error in embeddings generation: {str(e)}"
+    embedding_model = "models/embedding-001"
+    embedding = genai.embed_content(model=embedding_model,
+                                    content=input_text,
+                                    task_type="retrieval_document")
+    embedding_list = embedding["embedding"]
+    return embedding_list
 
 # Get response from Swag AI model - text to text
 def swag_ai_response(user_prompt):
-    try:
-        response = swag_ai_model.generate_content(user_prompt)
-        return response.text
-    except Exception as e:
-        return f"Error in generating response: {str(e)}"
+    swag_ai_model = genai.GenerativeModel("gemini-pro")
+    response = swag_ai_model.generate_content(user_prompt)
+    result = response.text
+    return result
