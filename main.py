@@ -6,7 +6,6 @@ from gemini_utility import (load_swag_ai_model,
                              swag_ai_response,
                              swag_ai_vision_response,
                              swag_ai_embeddings_response)
-import threading
 from io import BytesIO
 
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -79,14 +78,6 @@ if selected == "Image Captioning":
 
     uploaded_image = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
 
-    def generate_caption_async(image, prompt, result_callback):
-        # Perform caption generation in a separate thread
-        caption = swag_ai_vision_response(prompt, image)
-        result_callback(caption)
-
-    def display_caption(caption):
-        st.info(caption)
-
     if st.button("Generate Caption") and uploaded_image is not None:
         try:
             image = Image.open(uploaded_image)
@@ -100,9 +91,10 @@ if selected == "Image Captioning":
 
             default_prompt = "Write a short caption for this image"
 
+            # Synchronously generate caption for the image
             with st.spinner("Generating caption..."):
-                # Run the caption generation asynchronously
-                threading.Thread(target=generate_caption_async, args=(resized_image, default_prompt, display_caption)).start()
+                caption = swag_ai_vision_response(default_prompt, resized_image)
+                st.info(caption)
 
         except Exception as e:
             st.error(f"Error processing the image: {e}")
