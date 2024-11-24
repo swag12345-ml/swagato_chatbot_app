@@ -107,4 +107,4 @@ if selected == "Ask Me Anything":
 
     if st.button("Get Response"):
         response = swag_ai_response(user_prompt)
-        st.markdown(response
+        st.markdown(response)
