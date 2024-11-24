@@ -1,36 +1,45 @@
 import os
-import google.generativeai as genai
 import json
-from io import BytesIO
+from PIL import Image
+import google.generativeai as genai
 
-# Get the working directory
-working_directory = os.path.dirname(os.path.abspath(__file__))
+# Working directory path
+working_dir = os.path.dirname(os.path.abspath(_file_))
 
-# Load API key from config.json
-config_file_path = f"{working_directory}/config.json"
-config_data = json.load(open(config_file_path))
+# Path of config_data file
+config_file_path = f"{working_dir}/config.json"
+with open(config_file_path) as f:
+    config_data = json.load(f)
+
+# Loading the GOOGLE_API_KEY
 GOOGLE_API_KEY = config_data["GOOGLE_API_KEY"]
 
-# Configure google.generativeai with API key
+# Configuring google.generativeai with API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Function to load Pritam AI model
-def load_Pritam_ai_model():
-    Pritam_ai_model = genai.GenerativeModel("gemini-pro")
-    return Pritam_ai_model
+def load_swag_ai_model():
+    swag_ai_model = genai.GenerativeModel("gemini-pro")
+    return swag_ai_model
 
-# Function for image captioning
-def Pritam_Ai_vision_response(prompt, image):
-    try:
-        # Create the model instance for image captioning
-        Pritam_Ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        # Check if the image is a file-like object (for example, a BytesIO object)
-        if isinstance(image, BytesIO):
-            # Pass the prompt and image to the model for captioning
-            response = Pritam_Ai_vision_model.generate_content([prompt, image])
-            return response.text
-        else:
-            raise ValueError("Image format is not supported. Please upload a valid image.")
-    except Exception as e:
-        return f"Error generating caption: {str(e)}"
+# Get response from Swag AI Vision model - image/text to text
+def swag_ai_vision_response(prompt, image):
+    swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
+    response = swag_ai_vision_model.generate_content([prompt, image])
+    result = response.text
+    return result
+
+# Get response from embeddings model - text to embeddings
+def swag_ai_embeddings_response(input_text):
+    embedding_model = "models/embedding-001"
+    embedding = genai.embed_content(model=embedding_model,
+                                    content=input_text,
+                                    task_type="retrieval_document")
+    embedding_list = embedding["embedding"]
+    return embedding_list
+
+# Get response from Swag AI model - text to text
+def swag_ai_response(user_prompt):
+    swag_ai_model = genai.GenerativeModel("gemini-pro")
+    response = swag_ai_model.generate_content(user_prompt)
+    result = response.text
+    return result
