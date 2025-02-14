@@ -7,7 +7,7 @@ from gemini_utility import (load_swag_ai_model,
                              swag_ai_vision_response,
                              swag_ai_embeddings_response)
 
-working_dir = os.path.dirname(os.path.abspath(_file_))
+working_dir = os.path.dirname(os.path.abspath(__file__))
 
 st.set_page_config(
     page_title="Swag AI",
