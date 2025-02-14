@@ -4,7 +4,7 @@ from PIL import Image
 import google.generativeai as genai
 
 # Working directory path
-working_dir = os.path.dirname(os.path.abspath(_file_))
+working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Path of config_data file
 config_file_path = f"{working_dir}/config.json"
