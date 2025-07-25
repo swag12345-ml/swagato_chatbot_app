@@ -1,45 +1,64 @@
 import os
 import json
+import numpy as np
 from PIL import Image
 import google.generativeai as genai
 
-# Working directory path
+# ✅ Load configuration from config.json
 working_dir = os.path.dirname(os.path.abspath(__file__))
+config_file_path = os.path.join(working_dir, "config.json")
 
-# Path of config_data file
-config_file_path = f"{working_dir}/config.json"
-with open(config_file_path) as f:
-    config_data = json.load(f)
+try:
+    with open(config_file_path, "r") as f:
+        config_data = json.load(f)
+    GOOGLE_API_KEY = config_data.get("GOOGLE_API_KEY")
+    if not GOOGLE_API_KEY:
+        raise ValueError("GOOGLE_API_KEY is missing in config.json")
+except FileNotFoundError:
+    raise FileNotFoundError(f"config.json not found at: {config_file_path}")
+except json.JSONDecodeError:
+    raise ValueError("config.json is not a valid JSON file")
 
-# Loading the GOOGLE_API_KEY
-GOOGLE_API_KEY = config_data["GOOGLE_API_KEY"]
-
-# Configuring google.generativeai with API key
+# ✅ Configure the Gemini client
 genai.configure(api_key=GOOGLE_API_KEY)
 
+# ✅ Load the chat model (Gemini Pro)
 def load_swag_ai_model():
-    swag_ai_model = genai.GenerativeModel("gemini-pro")
-    return swag_ai_model
+    return genai.GenerativeModel("gemini-pro")
 
-# Get response from Swag AI Vision model - image/text to text
+# ✅ Vision-based response using Gemini 1.5 Flash
 def swag_ai_vision_response(prompt, image):
-    swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
-    response = swag_ai_vision_model.generate_content([prompt, image])
-    result = response.text
-    return result
+    model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Get response from embeddings model - text to embeddings
+    # Ensure image is converted to a format Gemini understands (RGB NumPy array)
+    if isinstance(image, Image.Image):
+        image = np.array(image.convert("RGB"))
+
+    try:
+        response = model.generate_content([prompt, image])
+        return response.text
+    except Exception as e:
+        return f"❌ Error during image response generation: {str(e)}"
+
+# ✅ Generate embeddings from text using Gemini Embeddings API
 def swag_ai_embeddings_response(input_text):
-    embedding_model = "models/embedding-001"
-    embedding = genai.embed_content(model=embedding_model,
-                                    content=input_text,
-                                    task_type="retrieval_document")
-    embedding_list = embedding["embedding"]
-    return embedding_list
+    try:
+        result = genai.embed_content(
+            model="models/embedding-001",
+            content=input_text,
+            task_type="retrieval_document"
+        )
+        return result["embedding"]
+    except Exception as e:
+        return f"❌ Error during embedding generation: {str(e)}"
 
-# Get response from Swag AI model - text to text
+# ✅ Generate a text response using Gemini Pro
 def swag_ai_response(user_prompt):
-    swag_ai_model = genai.GenerativeModel("gemini-pro")
-    response = swag_ai_model.generate_content(user_prompt)
-    result = response.text
-    return result
+    model = genai.GenerativeModel("gemini-pro")
+
+    try:
+        response = model.generate_content(user_prompt)
+        return response.text
+    except Exception as e:
+        return f"❌ Error during text generation: {str(e)}"
+
